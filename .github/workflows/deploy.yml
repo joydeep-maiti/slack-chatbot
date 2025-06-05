@@ -1,0 +1,35 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - main # or your deployment branch
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --production
+
+      - name: Create deployment zip
+        run: zip -r function.zip . -x "*.git*" "node_modules/aws-sdk/*"
+
+      - name: Deploy to Lambda
+        uses: appleboy/lambda-action@v0.2.0
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ secrets.AWS_REGION }}
+          function_name: ${{ secrets.LAMBDA_FUNCTION_NAME }}
+          zip_file: function.zip
